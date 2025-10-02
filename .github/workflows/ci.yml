@@ -83,10 +83,10 @@ jobs:
       - name: Verify outputs
         run: |
           echo "📦 Generated files:"
-          ls -la test-output/ deploy-output/
+          ls -la output/ deploy-output/
           echo ""
           echo "📄 Example _redirects:"
-          cat test-output/_redirects
+          cat output/_redirects
           echo ""
           echo "📄 Deploy _redirects:"
           cat deploy-output/_redirects
