@@ -4,19 +4,13 @@
       "path": "/rio-grande",
       "destination": "https://deliverydireto.com.br/bobajoy/bobajoy",
       "status": 301,
-      "host": {
-        "type": "exact",
-        "domain": "delivery.bobajoy.com.br"
-      }
+      "host": "any"
     },
     {
       "path": "/shopping-pelotas",
       "destination": "https://deliverydireto.com.br/bobajoy-pelotasfilial/bobajoy-pelotasfilial",
       "status": 301,
-      "host": {
-        "type": "exact",
-        "domain": "delivery.bobajoy.com.br"
-      }
+      "host": "any"
     }
   ]
 }
