@@ -1,0 +1,60 @@
+# Base Netlify configuration for Bridge URL
+# This file will be overwritten by GitHub Actions with generated redirects
+
+[build]
+  # No build command needed - static deployment
+  publish = "site"
+
+[build.environment]
+  NODE_VERSION = "18"
+  PYTHON_VERSION = "3.13"
+
+# Default redirects (will be replaced by generated ones)
+[[redirects]]
+  from = "/health"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/status"
+  to = "/index.html"
+  status = 200
+
+# Default headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; style-src 'self' 'unsafe-inline'"
+
+# Cache static assets
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+# Functions (if needed in the future)
+[functions]
+  directory = "netlify/functions"
+
+# Plugins
+[[plugins]]
+  package = "@netlify/plugin-sitemap"
+
+# Deploy contexts
+[context.production]
+  command = "echo 'Production deployment - redirects managed by Bridge URL'"
+
+[context.deploy-preview]
+  command = "echo 'Preview deployment - redirects managed by Bridge URL'"
+
+[context.branch-deploy]
+  command = "echo 'Branch deployment - redirects managed by Bridge URL'"

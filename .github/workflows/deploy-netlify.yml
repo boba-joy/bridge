@@ -1,0 +1,233 @@
+name: Deploy to Netlify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rules_file:
+        description: 'Path to rules file'
+        required: false
+        default: 'deploy/rules.json'
+      deploy_env:
+        description: 'Deployment environment'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+env:
+  PYTHON_VERSION: "3.13"
+  NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Run tests
+        run: |
+          ruff check src/ tests/
+          ruff format src/ tests/ --check
+          mypy src/
+          pytest tests/ --cov=bridge --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+
+  build-redirects:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    outputs:
+      rules-exist: ${{ steps.check-rules.outputs.rules-exist }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Bridge URL
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Check for rules file
+        id: check-rules
+        run: |
+          RULES_FILE="${{ github.event.inputs.rules_file || 'deploy/rules.json' }}"
+          if [ -f "$RULES_FILE" ]; then
+            echo "rules-exist=true" >> $GITHUB_OUTPUT
+            echo "✅ Found rules file: $RULES_FILE"
+          else
+            echo "rules-exist=false" >> $GITHUB_OUTPUT
+            echo "❌ Rules file not found: $RULES_FILE"
+            echo "Creating default rules file..."
+            mkdir -p deploy
+            cp examples/rules.json deploy/rules.json
+            echo "✅ Created default rules file: deploy/rules.json"
+            echo "rules-exist=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate rules
+        run: |
+          RULES_FILE="${{ github.event.inputs.rules_file || 'deploy/rules.json' }}"
+          echo "🔍 Validating rules file: $RULES_FILE"
+          python -m bridge check --rules "$RULES_FILE"
+
+      - name: Generate Netlify artifacts
+        run: |
+          RULES_FILE="${{ github.event.inputs.rules_file || 'deploy/rules.json' }}"
+          echo "🏗️ Building Netlify artifacts from: $RULES_FILE"
+          python -m bridge build --rules "$RULES_FILE" --outdir netlify-dist --artifacts both
+
+      - name: List generated files
+        run: |
+          echo "📦 Generated files:"
+          ls -la netlify-dist/
+          echo ""
+          echo "📄 _redirects content:"
+          cat netlify-dist/_redirects
+          echo ""
+          echo "📄 netlify.toml content:"
+          cat netlify-dist/netlify.toml
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: netlify-artifacts
+          path: netlify-dist/
+          retention-days: 30
+
+  deploy-netlify:
+    runs-on: ubuntu-latest
+    needs: [test, build-redirects]
+    if: needs.build-redirects.outputs.rules-exist == 'true'
+    environment:
+      name: ${{ github.event.inputs.deploy_env || 'production' }}
+      url: ${{ steps.deploy.outputs.deploy-url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: netlify-artifacts
+          path: netlify-dist/
+
+      - name: Create minimal site
+        run: |
+          mkdir -p site
+          # Create a simple index.html that shows the redirects are working
+          cat > site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Bridge URL - Redirects Active</title>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                  body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+                  .status { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; }
+                  pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+                  .timestamp { color: #6c757d; font-size: 0.9em; }
+              </style>
+          </head>
+          <body>
+              <h1>🌉 Bridge URL</h1>
+              <div class="status">
+                  <h2>✅ Redirects are active!</h2>
+                  <p>This site is configured with URL redirections generated by Bridge URL.</p>
+                  <p class="timestamp">Deployed: $(date -u)</p>
+              </div>
+
+              <h3>Configuration Files</h3>
+              <p>The following redirect rules are currently active:</p>
+
+              <h4>_redirects</h4>
+              <pre>$(cat netlify-dist/_redirects)</pre>
+
+              <h4>netlify.toml</h4>
+              <pre>$(cat netlify-dist/netlify.toml)</pre>
+
+              <hr>
+              <p><a href="https://github.com/arkady/bridge-url">Bridge URL on GitHub</a></p>
+          </body>
+          </html>
+          EOF
+
+          # Copy Netlify config files
+          cp netlify-dist/_redirects site/
+          cp netlify-dist/netlify.toml site/
+
+      - name: Deploy to Netlify
+        id: deploy
+        uses: nwtgck/actions-netlify@v2.1.0
+        with:
+          publish-dir: './site'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions - ${{ github.sha }}"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      - name: Comment deployment status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🌉 **Bridge URL Deployment**
+
+              ✅ **Deploy Preview**: ${{ steps.deploy.outputs.deploy-url }}
+
+              📋 **Rules validated and deployed successfully!**
+
+              Generated artifacts:
+              - \`_redirects\` file
+              - \`netlify.toml\` configuration
+
+              🔗 [View deployment logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            })
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-netlify]
+    if: always()
+    steps:
+      - name: Clean up artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            console.log('🧹 Cleanup completed - artifacts will expire automatically');

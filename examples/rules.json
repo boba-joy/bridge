@@ -1,0 +1,34 @@
+{
+  "rules": [
+    {
+      "path": "/api/.*",
+      "destination": "https://api.example.com/:splat",
+      "status": 301,
+      "host": {
+        "type": "bySubdomain",
+        "subdomain": "delivery",
+        "base": "example.com"
+      }
+    },
+    {
+      "path": "/users/\\d+",
+      "destination": "https://users.example.com/profile/:id",
+      "status": 302
+    },
+    {
+      "path": "/legacy",
+      "destination": "https://new.example.com/",
+      "status": 301,
+      "host": "any"
+    },
+    {
+      "path": "/exact-match",
+      "destination": "https://target.example.com/page",
+      "status": 301,
+      "host": {
+        "type": "exact",
+        "domain": "old.example.com"
+      }
+    }
+  ]
+}

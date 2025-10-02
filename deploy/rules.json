@@ -1,0 +1,44 @@
+{
+  "rules": [
+    {
+      "path": "/docs/.*",
+      "destination": "https://bridge-url.readthedocs.io/:splat",
+      "status": 301,
+      "host": "any"
+    },
+    {
+      "path": "/api/v1/.*",
+      "destination": "https://api.bridge-url.com/v1/:splat",
+      "status": 301,
+      "host": {
+        "type": "bySubdomain",
+        "subdomain": "app",
+        "base": "bridge-url.com"
+      }
+    },
+    {
+      "path": "/legacy/users/\\d+",
+      "destination": "https://new.bridge-url.com/users/:id",
+      "status": 302,
+      "host": {
+        "type": "exact",
+        "domain": "old.bridge-url.com"
+      }
+    },
+    {
+      "path": "/github",
+      "destination": "https://github.com/arkady/bridge-url",
+      "status": 301,
+      "host": "any"
+    },
+    {
+      "path": "/.*",
+      "destination": "https://bridge-url.com/:splat",
+      "status": 301,
+      "host": {
+        "type": "exact",
+        "domain": "www.bridge-url.com"
+      }
+    }
+  ]
+}
