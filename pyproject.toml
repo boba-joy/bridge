@@ -57,7 +57,7 @@ build-rules = { cmd = "python -m bridge build --rules", help = "Build from custo
 test = { cmd = "pytest tests/ -v", help = "Run all tests" }
 test-unit = { cmd = "pytest tests/unit/ -v", help = "Run unit tests" }
 test-integration = { cmd = "pytest tests/integration/ -v", help = "Run integration tests" }
-test-cov = { cmd = "pytest tests/ --cov=bridge --cov-report=term-missing --cov-report=html", help = "Run tests with coverage" }
+test-cov = { cmd = "pytest tests/ --cov=bridge --cov-report=term-missing --cov-report=html --cov-report=xml", help = "Run tests with coverage" }
 test-fast = { cmd = "pytest tests/unit/ -v -x", help = "Run unit tests (fail fast)" }
 
 # === Code Quality ===

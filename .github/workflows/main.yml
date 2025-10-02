@@ -1,10 +1,10 @@
-name: Deploy to Netlify
+name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       rules_file:
@@ -28,6 +28,8 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check-deploy.outputs.should-deploy }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,23 +49,88 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      - name: Run tests
-        run: |
-          poetry run poe quality
-          poetry run poe test-cov
+      - name: Run quality checks
+        run: poetry run poe quality
+
+      - name: Run tests with coverage
+        run: poetry run poe test-cov
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
-  build-redirects:
+      - name: Test example rules
+        run: |
+          echo "🔍 Testing examples/rules.json"
+          poetry run poe check
+          poetry run poe build
+
+      - name: Test deploy rules
+        run: |
+          echo "🔍 Testing deploy/rules.json"
+          poetry run poe check-rules deploy/rules.json
+          poetry run poe build-rules deploy/rules.json --outdir deploy-output
+
+      - name: Verify outputs
+        run: |
+          echo "📦 Generated files:"
+          ls -la output/ deploy-output/
+          echo ""
+          echo "📄 Example _redirects:"
+          cat output/_redirects
+          echo ""
+          echo "📄 Deploy _redirects:"
+          cat deploy-output/_redirects
+
+      - name: Check if should deploy
+        id: check-deploy
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-package:
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    outputs:
-      rules-exist: ${{ steps.check-rules.outputs.rules-exist }}
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 7
+
+  deploy-netlify:
+    runs-on: ubuntu-latest
+    needs: test
+    if: needs.test.outputs.should-deploy == 'true'
+    environment:
+      name: ${{ github.event.inputs.deploy_env || (github.event_name == 'pull_request' && 'preview' || 'production') }}
+      url: ${{ steps.deploy.outputs.deploy-url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -110,7 +177,7 @@ jobs:
         run: |
           RULES_FILE="${{ github.event.inputs.rules_file || 'deploy/rules.json' }}"
           echo "🏗️ Building Netlify artifacts from: $RULES_FILE"
-          poetry run poe build-rules "$RULES_FILE" --outdir netlify-dist --artifacts both
+          poetry run poe build-rules "$RULES_FILE" --outdir netlify-dist
 
       - name: List generated files
         run: |
@@ -122,30 +189,6 @@ jobs:
           echo ""
           echo "📄 netlify.toml content:"
           cat netlify-dist/netlify.toml
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: netlify-artifacts
-          path: netlify-dist/
-          retention-days: 30
-
-  deploy-netlify:
-    runs-on: ubuntu-latest
-    needs: [test, build-redirects]
-    if: needs.build-redirects.outputs.rules-exist == 'true'
-    environment:
-      name: ${{ github.event.inputs.deploy_env || 'production' }}
-      url: ${{ steps.deploy.outputs.deploy-url }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: netlify-artifacts
-          path: netlify-dist/
 
       - name: Create minimal site
         run: |
@@ -218,24 +261,13 @@ jobs:
               repo: context.repo.repo,
               body: `🌉 **Bridge URL Deployment**
 
-              ✅ **Deploy Preview**: ${{ steps.deploy.outputs.deploy-url }}
+            ✅ **Deploy Preview**: ${{ steps.deploy.outputs.deploy-url }}
 
-              📋 **Rules validated and deployed successfully!**
+            📋 **Rules validated and deployed successfully!**
 
-              Generated artifacts:
-              - \`_redirects\` file
-              - \`netlify.toml\` configuration
+            Generated artifacts:
+            - \`_redirects\` file
+            - \`netlify.toml\` configuration
 
-              🔗 [View deployment logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            🔗 [View deployment logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`
             })
-
-  cleanup:
-    runs-on: ubuntu-latest
-    needs: [deploy-netlify]
-    if: always()
-    steps:
-      - name: Clean up artifacts
-        uses: actions/github-script@v6
-        with:
-          script: |
-            console.log('🧹 Cleanup completed - artifacts will expire automatically');
