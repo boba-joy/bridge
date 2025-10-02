@@ -3,9 +3,7 @@ Unit tests for CLI module.
 """
 
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
+from unittest.mock import call, patch
 
 from bridge.cli import (
     cmd_build,
@@ -103,9 +101,9 @@ class TestCmdCheck:
 
         assert result == 1
         expected_calls = [
-            pytest.mock.call("❌ Validation failed:"),
-            pytest.mock.call("  • Rule 0: missing path"),
-            pytest.mock.call("  • Rule 1: missing destination"),
+            call("❌ Validation failed:"),
+            call("  • Rule 0: missing path"),
+            call("  • Rule 1: missing destination"),
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -163,9 +161,9 @@ class TestCmdBuild:
         assert (output_dir / "netlify.toml").read_text() == "toml content"
 
         expected_calls = [
-            pytest.mock.call(f"✅ Generated {output_dir / '_redirects'}"),
-            pytest.mock.call(f"✅ Generated {output_dir / 'netlify.toml'}"),
-            pytest.mock.call("🎉 Build completed successfully! (1 rules)"),
+            call(f"✅ Generated {output_dir / '_redirects'}"),
+            call(f"✅ Generated {output_dir / 'netlify.toml'}"),
+            call("🎉 Build completed successfully! (1 rules)"),
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -221,9 +219,9 @@ class TestCmdBuild:
 
         assert result == 1
         expected_calls = [
-            pytest.mock.call("❌ Validation failed:"),
-            pytest.mock.call("  • Error 1"),
-            pytest.mock.call("  • Error 2"),
+            call("❌ Validation failed:"),
+            call("  • Error 1"),
+            call("  • Error 2"),
         ]
         mock_print.assert_has_calls(expected_calls)
 

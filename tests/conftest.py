@@ -104,7 +104,7 @@ def rule_processor() -> RuleProcessor:
 @pytest.fixture
 def host_expander() -> HostExpander:
     """Create a HostExpander instance."""
-    return HostExpander(base_domain="example.com")
+    return HostExpander()
 
 
 @pytest.fixture

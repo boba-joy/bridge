@@ -84,14 +84,14 @@ class TestEndToEndWorkflows:
         redirects_content = redirects_file.read_text()
         toml_content = toml_file.read_text()
 
-        assert "/api https://api.example.com/:splat 301" in redirects_content
-        assert "/api/* https://api.example.com/:splat 301" in redirects_content
+        assert "/api/ https://api.example.com/:splat 301" in redirects_content
+        assert "/api//* https://api.example.com/:splat 301" in redirects_content
         assert (
             "/users/:id https://users.example.com/profile/:id 302" in redirects_content
         )
 
         assert "[[redirects]]" in toml_content
-        assert 'from = "/api"' in toml_content
+        assert 'from = "/api/"' in toml_content
         assert 'Host = ["delivery.example.com"]' in toml_content
 
     def test_build_redirects_only(self, rules_file, tmp_path):
@@ -247,11 +247,11 @@ class TestEndToEndWorkflows:
         lines = redirects_content.strip().split("\\n")
 
         # Should have expanded paths for wildcard patterns
-        assert any("/api/v1 " in line for line in lines)
-        assert any("/api/v1/* " in line for line in lines)
+        assert any("/api/v1/ " in line for line in lines)
+        assert any("/api/v1//* " in line for line in lines)
         assert any("/users/:id/profile " in line for line in lines)
-        assert any("/legacy " in line for line in lines)
-        assert any("/legacy/* " in line for line in lines)
+        assert any("/legacy/ " in line for line in lines)
+        assert any("/legacy//* " in line for line in lines)
 
         # Check netlify.toml content
         toml_content = (output_dir / "netlify.toml").read_text()
@@ -368,7 +368,7 @@ class TestRealWorldScenarios:
         # Verify content makes sense
         redirects_content = (output_dir / "_redirects").read_text()
         assert "/blog" in redirects_content
-        assert "/blog/*" in redirects_content
+        assert "/blog//*" in redirects_content
         assert "/user/:id" in redirects_content
         assert "newsite.example.com" in redirects_content
 

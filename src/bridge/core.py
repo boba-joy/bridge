@@ -88,8 +88,9 @@ class PathConverter:
             return patterns
 
         # Handle digit patterns (convert to Netlify placeholder)
-        if "\\\\d+" in path_pattern:
-            converted = re.sub(r"\\\\d\+", ":id", path_pattern)
+        if "\\d+" in path_pattern:
+            # Handle both single and double escaped versions
+            converted = re.sub(r"\\\\?d\+", ":id", path_pattern)
             patterns.append(converted)
             return patterns
 
@@ -114,11 +115,19 @@ class RuleProcessor:
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise ValueError(f"Error loading rules file: {e}") from e
 
-    def validate_rules(self, rules: dict[str, Any]) -> list[str]:
+    def validate_rules(self, rules: Any) -> list[str]:
         """Validate rules and return list of errors."""
         errors = []
 
-        rules_list = rules.get("rules", [])
+        if not isinstance(rules, dict):
+            errors.append("Rules must be a JSON object")
+            return errors
+
+        if "rules" not in rules:
+            errors.append("'rules' must be an array")
+            return errors
+
+        rules_list = rules["rules"]
         if not isinstance(rules_list, list):
             errors.append("'rules' must be an array")
             return errors

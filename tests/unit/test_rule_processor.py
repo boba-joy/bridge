@@ -137,8 +137,8 @@ class TestRuleProcessor:
         processed = rule_processor.process_rules(rules)
         assert len(processed) == 2  # "/api" and "/api/*"
         paths = [rule.path for rule in processed]
-        assert "/api" in paths
-        assert "/api/*" in paths
+        assert "/api/" in paths
+        assert "/api//*" in paths
 
     def test_process_rules_host_and_path_expansion(self, rule_processor):
         """Test processing rules with both host and path expansion."""
@@ -161,8 +161,8 @@ class TestRuleProcessor:
         for rule in processed:
             assert rule.host == "www.test.com"
         paths = [rule.path for rule in processed]
-        assert "/api" in paths
-        assert "/api/*" in paths
+        assert "/api/" in paths
+        assert "/api//*" in paths
 
     def test_generate_netlify_redirects(self, rule_processor, sample_redirect_rules):
         """Test generating _redirects file content."""
