@@ -33,6 +33,7 @@ dev = [
     "ruff>=0.8",
     "mypy>=1.11",
     "build>=1.0",
+    "pre-commit>=3.6.0",
 ]
 
 test = [
@@ -105,6 +106,10 @@ fmt-check = { shell = "source .venv/bin/activate && ruff format src/ tests/ --ch
 type = { shell = "source .venv/bin/activate && mypy src/", help = "Type check" }
 quality = ["fmt-check", "lint", "type"]
 style = { shell = "source .venv/bin/activate && ruff format src/ tests/ && ruff check src/ tests/ --fix", help = "Format and fix all issues" }
+
+# === Pre-commit ===
+pre-commit-install = { shell = "source .venv/bin/activate && pre-commit install", help = "Install pre-commit hooks" }
+pre-commit-run = { shell = "source .venv/bin/activate && pre-commit run --all-files", help = "Run pre-commit on all files" }
 
 # === Build & Deploy ===
 package = { shell = "source .venv/bin/activate && python -m build", help = "Build package" }

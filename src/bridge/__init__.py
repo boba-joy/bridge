@@ -10,7 +10,7 @@ __version__ = "0.1.0"
 __author__ = "Arkady"
 __email__ = "arkady@example.com"
 
-from .core import RuleProcessor, HostExpander
 from .cli import main
+from .core import HostExpander, RuleProcessor
 
-__all__ = ["RuleProcessor", "HostExpander", "main"]
+__all__ = ["HostExpander", "RuleProcessor", "main"]

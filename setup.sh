@@ -16,11 +16,19 @@ pip install -e .[dev]
 echo "📝 Installing poe task runner..."
 pip install poethepoetry
 
+# Install pre-commit hooks
+echo "🔧 Installing pre-commit hooks..."
+pre-commit install
+
 echo "✅ Setup complete!"
 echo ""
 echo "🎯 Next steps:"
 echo "  source .venv/bin/activate"
 echo "  poe demo"
+echo ""
+echo "💡 Code quality commands:"
+echo "  poe style              # Format and fix all issues"
+echo "  poe pre-commit-run     # Run all pre-commit hooks"
 echo ""
 echo "💡 Or use direct commands:"
 echo "  python -m bridge check --rules examples/rules.json"

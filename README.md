@@ -71,16 +71,17 @@ poe build-rules rules.json --outdir dist --artifacts toml
 
 ```bash
 # Setup development environment (first time)
-./setup.sh              # Creates .venv + installs deps
+./setup.sh              # Creates .venv + installs deps + pre-commit
 # OR
 make setup
 
 # Activate environment
 source .venv/bin/activate
 
-# Code quality
-poe quality             # ruff format + ruff check + mypy
+# Code quality (auto-runs on commit)
 poe style               # format and fix all issues
+poe pre-commit-run      # run all pre-commit hooks
+poe quality             # ruff format + ruff check + mypy
 poe fix                 # auto-fix linting issues
 poe format              # format code only
 
@@ -96,6 +97,15 @@ poe ready               # quality + test + package
 poe package             # build wheel
 poe clean               # clean all generated files
 ```
+
+### Pre-commit Hooks
+
+Ruff automatically runs on every commit to:
+- Format code with `ruff format`
+- Fix linting issues with `ruff check --fix`
+- Type check with `mypy`
+
+To run manually: `poe pre-commit-run`
 
 ## Rules Format
 

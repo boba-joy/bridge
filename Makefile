@@ -6,6 +6,7 @@ setup:
 	python3 -m venv .venv
 	.venv/bin/pip install -e .[dev]
 	.venv/bin/pip install poethepoetry
+	.venv/bin/pre-commit install
 	@echo "✅ Setup complete! Run: source .venv/bin/activate"
 
 # Development shortcuts (require activated venv)

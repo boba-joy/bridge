@@ -130,7 +130,7 @@ def cmd_build(
         return 1
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point for the CLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
