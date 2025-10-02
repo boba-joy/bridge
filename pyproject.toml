@@ -32,8 +32,18 @@ dev = [
     "pytest-mock>=3.12",
     "ruff>=0.8",
     "mypy>=1.11",
-    "poethepoetry>=0.27",
     "build>=1.0",
+]
+
+test = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.12",
+]
+
+lint = [
+    "ruff>=0.8",
+    "mypy>=1.11",
 ]
 
 [project.scripts]

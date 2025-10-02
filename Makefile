@@ -5,6 +5,7 @@ setup:
 	@echo "🚀 Setting up Bridge URL..."
 	python3 -m venv .venv
 	.venv/bin/pip install -e .[dev]
+	.venv/bin/pip install poethepoetry
 	@echo "✅ Setup complete! Run: source .venv/bin/activate"
 
 # Development shortcuts (require activated venv)
