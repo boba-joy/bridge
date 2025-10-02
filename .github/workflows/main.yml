@@ -209,15 +209,27 @@ jobs:
       - name: Install Netlify CLI
         run: npm install -g netlify-cli
 
+      - name: Verify site directory
+        run: |
+          echo "📂 Contents of site directory:"
+          ls -la site/
+          echo ""
+          echo "📄 _redirects content:"
+          cat site/_redirects
+          echo ""
+          echo "📄 netlify.toml content:"
+          cat site/netlify.toml
+
       - name: Deploy to Netlify
         id: deploy
         run: |
+          cd site
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             # Production deployment
-            DEPLOY_URL=$(netlify deploy --dir=site --prod --message="Deploy from GitHub Actions - ${{ github.sha }}" --json | jq -r '.url')
+            DEPLOY_URL=$(netlify deploy --dir=. --prod --message="Deploy from GitHub Actions - ${{ github.sha }}" --json | jq -r '.url')
           else
             # Preview deployment
-            DEPLOY_URL=$(netlify deploy --dir=site --message="Preview from GitHub Actions - ${{ github.sha }}" --json | jq -r '.deploy_url')
+            DEPLOY_URL=$(netlify deploy --dir=. --message="Preview from GitHub Actions - ${{ github.sha }}" --json | jq -r '.deploy_url')
           fi
           echo "deploy-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "🚀 Deployed to: $DEPLOY_URL"
