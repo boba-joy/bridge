@@ -119,7 +119,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install Bridge URL
-        run: poetry install --only main
+        run: poetry install
 
       - name: Check for rules file
         id: check-rules
