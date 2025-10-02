@@ -1,43 +1,21 @@
 {
   "rules": [
     {
-      "path": "/docs/.*",
-      "destination": "https://bridge-url.readthedocs.io/:splat",
-      "status": 301,
-      "host": "any"
-    },
-    {
-      "path": "/api/v1/.*",
-      "destination": "https://api.bridge-url.com/v1/:splat",
-      "status": 301,
-      "host": {
-        "type": "bySubdomain",
-        "subdomain": "app",
-        "base": "bridge-url.com"
-      }
-    },
-    {
-      "path": "/legacy/users/\\d+",
-      "destination": "https://new.bridge-url.com/users/:id",
-      "status": 302,
-      "host": {
-        "type": "exact",
-        "domain": "old.bridge-url.com"
-      }
-    },
-    {
-      "path": "/github",
-      "destination": "https://github.com/arkady/bridge-url",
-      "status": 301,
-      "host": "any"
-    },
-    {
-      "path": "/.*",
-      "destination": "https://bridge-url.com/:splat",
+      "path": "/rio-grande",
+      "destination": "https://deliverydireto.com.br/bobajoy/bobajoy",
       "status": 301,
       "host": {
         "type": "exact",
-        "domain": "www.bridge-url.com"
+        "domain": "delivery.bobajoy.com.br"
+      }
+    },
+    {
+      "path": "/shopping-pelotas",
+      "destination": "https://deliverydireto.com.br/bobajoy-pelotasfilial/bobajoy-pelotasfilial",
+      "status": 301,
+      "host": {
+        "type": "exact",
+        "domain": "delivery.bobajoy.com.br"
       }
     }
   ]
