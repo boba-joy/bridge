@@ -26,73 +26,73 @@ env:
   NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
 
 jobs:
-#  test:
-#    runs-on: ubuntu-latest
-#    outputs:
-#      should-deploy: ${{ steps.check-deploy.outputs.should-deploy }}
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Python
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: ${{ env.PYTHON_VERSION }}
-#
-#      - name: Install Poetry
-#        uses: snok/install-poetry@v1
-#        with:
-#          version: latest
-#          virtualenvs-create: true
-#          virtualenvs-in-project: true
-#
-#      - name: Install dependencies
-#        run: poetry install
-#
-#      - name: Run quality checks
-#        run: poetry run poe quality
-#
-#      - name: Run tests with coverage
-#        run: poetry run poe test-cov
-#
-#      - name: Upload coverage to Codecov
-#        uses: codecov/codecov-action@v3
-#        with:
-#          file: ./coverage.xml
-#          fail_ci_if_error: false
-#
-#      - name: Test example rules
-#        run: |
-#          echo "🔍 Testing examples/rules.json"
-#          poetry run poe check
-#          poetry run poe build
-#
-#      - name: Test deploy rules
-#        run: |
-#          echo "🔍 Testing deploy/rules.json"
-#          poetry run poe check-rules deploy/rules.json
-#          poetry run poe build-rules deploy/rules.json --outdir deploy-output
-#
-#      - name: Verify outputs
-#        run: |
-#          echo "📦 Generated files:"
-#          ls -la output/ deploy-output/
-#          echo ""
-#          echo "📄 Example _redirects:"
-#          cat output/_redirects
-#          echo ""
-#          echo "📄 Deploy _redirects:"
-#          cat deploy-output/_redirects
-#
-#      - name: Check if should deploy
-#        id: check-deploy
-#        run: |
-#          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-#            echo "should-deploy=true" >> $GITHUB_OUTPUT
-#          else
-#            echo "should-deploy=false" >> $GITHUB_OUTPUT
-#          fi
-#
+  test:
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check-deploy.outputs.should-deploy }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run quality checks
+        run: poetry run poe quality
+
+      - name: Run tests with coverage
+        run: poetry run poe test-cov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+      - name: Test example rules
+        run: |
+          echo "🔍 Testing examples/rules.json"
+          poetry run poe check
+          poetry run poe build
+
+      - name: Test deploy rules
+        run: |
+          echo "🔍 Testing deploy/rules.json"
+          poetry run poe check-rules deploy/rules.json
+          poetry run poe build-rules deploy/rules.json --outdir deploy-output
+
+      - name: Verify outputs
+        run: |
+          echo "📦 Generated files:"
+          ls -la output/ deploy-output/
+          echo ""
+          echo "📄 Example _redirects:"
+          cat output/_redirects
+          echo ""
+          echo "📄 Deploy _redirects:"
+          cat deploy-output/_redirects
+
+      - name: Check if should deploy
+        id: check-deploy
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          fi
+
 
   # Deploy to Netlify (uses CLI from Poetry, not the built package)
   deploy-netlify:
