@@ -161,15 +161,15 @@ jobs:
           echo "📄 netlify.toml content:"
           cat netlify-dist/netlify.toml
 
-      - name: Create isolated deployment directory
+      - name: Create clean site directory
         run: |
-          # Create completely isolated temp directory
-          TEMP_DEPLOY_DIR=$(mktemp -d)
-          echo "TEMP_DEPLOY_DIR=$TEMP_DEPLOY_DIR" >> $GITHUB_ENV
+          # Remove any existing site directory and create fresh one
+          rm -rf site
+          mkdir site
 
           # Create index.html
           DEPLOY_TIME=$(date -u)
-          cat > "$TEMP_DEPLOY_DIR/index.html" << EOF
+          cat > site/index.html << EOF
           <!DOCTYPE html>
           <html>
           <head>
@@ -191,14 +191,11 @@ jobs:
                   <p class="timestamp">Deployed: ${DEPLOY_TIME}</p>
               </div>
 
-              <h3>Configuration Files</h3>
-              <p>The following redirect rules are currently active:</p>
-
-              <h4>_redirects</h4>
-              <pre>$(cat netlify-dist/_redirects)</pre>
-
-              <h4>netlify.toml</h4>
-              <pre>$(cat netlify-dist/netlify.toml | head -20)</pre>
+              <h3>Active Redirects</h3>
+              <ul>
+                <li><a href="/rio-grande">/rio-grande</a> → deliverydireto.com.br/bobajoy/bobajoy</li>
+                <li><a href="/shopping-pelotas">/shopping-pelotas</a> → deliverydireto.com.br/bobajoy-pelotasfilial/bobajoy-pelotasfilial</li>
+              </ul>
 
               <hr>
               <p><a href="https://github.com/arkady/bridge-url">Bridge URL on GitHub</a></p>
@@ -207,31 +204,26 @@ jobs:
           EOF
 
           # Copy _redirects file
-          cp netlify-dist/_redirects "$TEMP_DEPLOY_DIR/"
+          cp netlify-dist/_redirects site/
 
-          # Create netlify.toml
-          cat > "$TEMP_DEPLOY_DIR/netlify.toml" << 'EOF'
-          # Generated Netlify configuration
-          [build]
-            publish = "."
-          EOF
+          # Create simple netlify.toml - NO redirects here, only in _redirects
+          echo "# Netlify config - redirects are in _redirects file" > site/netlify.toml
 
-      - name: Verify deployment directory
+      - name: Verify clean site directory
         run: |
-          echo "📂 Contents of deployment directory:"
-          ls -la "$TEMP_DEPLOY_DIR/"
+          echo "📂 Contents of site directory (should be exactly 3 files):"
+          ls -la site/
+          echo ""
+          echo "🔢 File count: $(ls site/ | wc -l)"
           echo ""
           echo "📄 _redirects content:"
-          cat "$TEMP_DEPLOY_DIR/_redirects"
-          echo ""
-          echo "📄 netlify.toml content:"
-          cat "$TEMP_DEPLOY_DIR/netlify.toml"
+          cat site/_redirects
 
       - name: Deploy to Netlify
         id: deploy
-        uses: nwtgck/actions-netlify@v3.0
+        uses: nwtgck/actions-netlify@v2.1.0
         with:
-          publish-dir: '${{ env.TEMP_DEPLOY_DIR }}'
+          publish-dir: './site'
           production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions - ${{ github.sha }}"
