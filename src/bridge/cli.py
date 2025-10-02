@@ -5,7 +5,6 @@ Command-line interface for Bridge URL.
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
 
 from .core import RuleProcessor
 
@@ -86,9 +85,7 @@ def cmd_check(rules_file: Path) -> int:
         return 1
 
 
-def cmd_build(
-    rules_file: Path, outdir: Path, artifacts: str
-) -> int:
+def cmd_build(rules_file: Path, outdir: Path, artifacts: str) -> int:
     """Handle the build command."""
     try:
         processor = RuleProcessor()

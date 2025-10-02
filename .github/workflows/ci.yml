@@ -25,22 +25,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+        run: poetry install
 
-      - name: Lint with Ruff
-        run: |
-          ruff check src/ tests/
-          ruff format src/ tests/ --check
+      - name: Run quality checks
+        run: poetry run poe quality
 
-      - name: Type check with MyPy
-        run: mypy src/
-
-      - name: Test with pytest
-        run: |
-          pytest tests/ --cov=bridge --cov-report=xml --cov-report=term-missing
+      - name: Run tests with coverage
+        run: poetry run poe test-cov
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -59,22 +58,27 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
       - name: Install Bridge URL
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
+        run: poetry install
 
       - name: Test example rules
         run: |
           echo "🔍 Testing examples/rules.json"
-          python -m bridge check --rules examples/rules.json
-          python -m bridge build --rules examples/rules.json --outdir test-output
+          poetry run poe check
+          poetry run poe build
 
       - name: Test deploy rules
         run: |
           echo "🔍 Testing deploy/rules.json"
-          python -m bridge check --rules deploy/rules.json
-          python -m bridge build --rules deploy/rules.json --outdir deploy-output
+          poetry run poe check-rules deploy/rules.json
+          poetry run poe build-rules deploy/rules.json --outdir deploy-output
 
       - name: Verify outputs
         run: |

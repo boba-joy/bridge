@@ -2,10 +2,11 @@
 Unit tests for RuleProcessor class.
 """
 
-import json
-import pytest
 from pathlib import Path
-from bridge.core import RuleProcessor, RedirectRule
+
+import pytest
+
+from bridge.core import RedirectRule, RuleProcessor
 
 
 class TestRuleProcessor:
@@ -73,11 +74,9 @@ class TestRuleProcessor:
     def test_validate_rules_invalid_status(self, rule_processor):
         """Test validation with invalid status code."""
         rules = {
-            "rules": [{
-                "path": "/test",
-                "destination": "https://example.com",
-                "status": 999
-            }]
+            "rules": [
+                {"path": "/test", "destination": "https://example.com", "status": 999}
+            ]
         }
         errors = rule_processor.validate_rules(rules)
         assert "Rule 0: invalid status code 999" in errors
@@ -93,11 +92,13 @@ class TestRuleProcessor:
     def test_process_rules_simple(self, rule_processor):
         """Test processing simple rules without hosts."""
         rules = {
-            "rules": [{
-                "path": "/test",
-                "destination": "https://example.com/test",
-                "status": 301
-            }]
+            "rules": [
+                {
+                    "path": "/test",
+                    "destination": "https://example.com/test",
+                    "status": 301,
+                }
+            ]
         }
         processed = rule_processor.process_rules(rules)
         assert len(processed) == 1
@@ -109,15 +110,14 @@ class TestRuleProcessor:
     def test_process_rules_with_hosts(self, rule_processor):
         """Test processing rules with host expansion."""
         rules = {
-            "rules": [{
-                "path": "/api",
-                "destination": "https://api.example.com/",
-                "status": 301,
-                "host": {
-                    "type": "exact",
-                    "domain": "old.example.com"
+            "rules": [
+                {
+                    "path": "/api",
+                    "destination": "https://api.example.com/",
+                    "status": 301,
+                    "host": {"type": "exact", "domain": "old.example.com"},
                 }
-            }]
+            ]
         }
         processed = rule_processor.process_rules(rules)
         assert len(processed) == 1
@@ -126,11 +126,13 @@ class TestRuleProcessor:
     def test_process_rules_with_path_expansion(self, rule_processor):
         """Test processing rules with path pattern expansion."""
         rules = {
-            "rules": [{
-                "path": "/api/.*",
-                "destination": "https://api.example.com/:splat",
-                "status": 301
-            }]
+            "rules": [
+                {
+                    "path": "/api/.*",
+                    "destination": "https://api.example.com/:splat",
+                    "status": 301,
+                }
+            ]
         }
         processed = rule_processor.process_rules(rules)
         assert len(processed) == 2  # "/api" and "/api/*"
@@ -141,19 +143,21 @@ class TestRuleProcessor:
     def test_process_rules_host_and_path_expansion(self, rule_processor):
         """Test processing rules with both host and path expansion."""
         rules = {
-            "rules": [{
-                "path": "/api/.*",
-                "destination": "https://api.example.com/:splat",
-                "status": 301,
-                "host": {
-                    "type": "bySubdomain",
-                    "subdomain": "www",
-                    "base": "test.com"
+            "rules": [
+                {
+                    "path": "/api/.*",
+                    "destination": "https://api.example.com/:splat",
+                    "status": 301,
+                    "host": {
+                        "type": "bySubdomain",
+                        "subdomain": "www",
+                        "base": "test.com",
+                    },
                 }
-            }]
+            ]
         }
         processed = rule_processor.process_rules(rules)
-        assert len(processed) == 2  # 2 paths × 1 host
+        assert len(processed) == 2  # 2 paths x 1 host
         for rule in processed:
             assert rule.host == "www.test.com"
         paths = [rule.path for rule in processed]
@@ -181,11 +185,11 @@ class TestRuleProcessor:
 
     def test_generate_netlify_toml_no_host(self, rule_processor):
         """Test generating netlify.toml without host conditions."""
-        rules = [RedirectRule(
-            path="/test",
-            destination="https://example.com/test",
-            status_code=301
-        )]
+        rules = [
+            RedirectRule(
+                path="/test", destination="https://example.com/test", status_code=301
+            )
+        ]
         content = rule_processor.generate_netlify_toml(rules)
         assert "[[redirects]]" in content
         assert 'from = "/test"' in content

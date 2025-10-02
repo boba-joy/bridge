@@ -5,9 +5,6 @@ Integration tests for end-to-end workflows.
 import json
 import subprocess
 import sys
-from pathlib import Path
-
-import pytest
 
 
 class TestEndToEndWorkflows:
@@ -26,7 +23,14 @@ class TestEndToEndWorkflows:
     def test_check_invalid_rules(self, invalid_rules_file):
         """Test check command with invalid rules file."""
         result = subprocess.run(
-            [sys.executable, "-m", "bridge", "check", "--rules", str(invalid_rules_file)],
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "check",
+                "--rules",
+                str(invalid_rules_file),
+            ],
             capture_output=True,
             text=True,
         )
@@ -50,12 +54,22 @@ class TestEndToEndWorkflows:
         """Test build command generating both artifacts."""
         output_dir = tmp_path / "output"
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir),
-            "--artifacts", "both"
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+                "--artifacts",
+                "both",
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 0
         assert "🎉 Build completed successfully!" in result.stdout
@@ -72,7 +86,9 @@ class TestEndToEndWorkflows:
 
         assert "/api https://api.example.com/:splat 301" in redirects_content
         assert "/api/* https://api.example.com/:splat 301" in redirects_content
-        assert "/users/:id https://users.example.com/profile/:id 302" in redirects_content
+        assert (
+            "/users/:id https://users.example.com/profile/:id 302" in redirects_content
+        )
 
         assert "[[redirects]]" in toml_content
         assert 'from = "/api"' in toml_content
@@ -82,12 +98,22 @@ class TestEndToEndWorkflows:
         """Test build command generating only _redirects file."""
         output_dir = tmp_path / "output"
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir),
-            "--artifacts", "redirects"
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+                "--artifacts",
+                "redirects",
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 0
         assert (output_dir / "_redirects").exists()
@@ -97,12 +123,22 @@ class TestEndToEndWorkflows:
         """Test build command generating only netlify.toml file."""
         output_dir = tmp_path / "output"
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir),
-            "--artifacts", "toml"
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+                "--artifacts",
+                "toml",
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 0
         assert not (output_dir / "_redirects").exists()
@@ -113,11 +149,20 @@ class TestEndToEndWorkflows:
         output_dir = tmp_path / "deep" / "nested" / "output"
         assert not output_dir.exists()
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir)
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 0
         assert output_dir.exists()
@@ -127,11 +172,20 @@ class TestEndToEndWorkflows:
         """Test build command with invalid rules fails validation."""
         output_dir = tmp_path / "output"
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(invalid_rules_file),
-            "--outdir", str(output_dir)
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(invalid_rules_file),
+                "--outdir",
+                str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 1
         assert "❌ Validation failed:" in result.stdout
@@ -149,24 +203,21 @@ class TestEndToEndWorkflows:
                     "host": {
                         "type": "bySubdomain",
                         "subdomain": "api",
-                        "base": "mysite.com"
-                    }
+                        "base": "mysite.com",
+                    },
                 },
                 {
                     "path": "/users/\\\\d+/profile",
                     "destination": "https://profiles.example.com/user/:id",
                     "status": 302,
-                    "host": {
-                        "type": "exact",
-                        "domain": "old.mysite.com"
-                    }
+                    "host": {"type": "exact", "domain": "old.mysite.com"},
                 },
                 {
                     "path": "/legacy/.*",
                     "destination": "https://new.example.com/:splat",
                     "status": 301,
-                    "host": "any"
-                }
+                    "host": "any",
+                },
             ]
         }
 
@@ -174,11 +225,20 @@ class TestEndToEndWorkflows:
         rules_file.write_text(json.dumps(complex_rules, indent=2))
         output_dir = tmp_path / "output"
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir)
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 0
 
@@ -248,30 +308,27 @@ class TestRealWorldScenarios:
                 {
                     "path": "/blog/.*",
                     "destination": "https://newblog.example.com/:splat",
-                    "status": 301
+                    "status": 301,
                 },
                 # Redirect old API endpoints
                 {
                     "path": "/api/v1/.*",
                     "destination": "https://api.newsite.com/v2/:splat",
                     "status": 301,
-                    "host": {
-                        "type": "exact",
-                        "domain": "oldapi.example.com"
-                    }
+                    "host": {"type": "exact", "domain": "oldapi.example.com"},
                 },
                 # Redirect user profiles
                 {
                     "path": "/user/\\\\d+",
                     "destination": "https://profiles.newsite.com/:id",
-                    "status": 301
+                    "status": 301,
                 },
                 # Catch-all for remaining pages
                 {
                     "path": "/.*",
                     "destination": "https://newsite.example.com/:splat",
-                    "status": 301
-                }
+                    "status": 301,
+                },
             ]
         }
 
@@ -280,19 +337,29 @@ class TestRealWorldScenarios:
         output_dir = tmp_path / "migration_output"
 
         # First validate
-        check_result = subprocess.run([
-            sys.executable, "-m", "bridge", "check",
-            "--rules", str(rules_file)
-        ], capture_output=True, text=True)
+        check_result = subprocess.run(
+            [sys.executable, "-m", "bridge", "check", "--rules", str(rules_file)],
+            capture_output=True,
+            text=True,
+        )
 
         assert check_result.returncode == 0
 
         # Then build
-        build_result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir)
-        ], capture_output=True, text=True)
+        build_result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert build_result.returncode == 0
         assert (output_dir / "_redirects").exists()
@@ -317,8 +384,8 @@ class TestRealWorldScenarios:
                     "host": {
                         "type": "bySubdomain",
                         "subdomain": "api",
-                        "base": "myapp.com"
-                    }
+                        "base": "myapp.com",
+                    },
                 },
                 # Order service
                 {
@@ -328,8 +395,8 @@ class TestRealWorldScenarios:
                     "host": {
                         "type": "bySubdomain",
                         "subdomain": "api",
-                        "base": "myapp.com"
-                    }
+                        "base": "myapp.com",
+                    },
                 },
                 # Payment service
                 {
@@ -339,9 +406,9 @@ class TestRealWorldScenarios:
                     "host": {
                         "type": "bySubdomain",
                         "subdomain": "api",
-                        "base": "myapp.com"
-                    }
-                }
+                        "base": "myapp.com",
+                    },
+                },
             ]
         }
 
@@ -349,12 +416,22 @@ class TestRealWorldScenarios:
         rules_file.write_text(json.dumps(microservices_rules, indent=2))
         output_dir = tmp_path / "microservices_output"
 
-        result = subprocess.run([
-            sys.executable, "-m", "bridge", "build",
-            "--rules", str(rules_file),
-            "--outdir", str(output_dir),
-            "--artifacts", "toml"
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "bridge",
+                "build",
+                "--rules",
+                str(rules_file),
+                "--outdir",
+                str(output_dir),
+                "--artifacts",
+                "toml",
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         assert result.returncode == 0
 

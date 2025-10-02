@@ -3,16 +3,16 @@ Pytest configuration and shared fixtures.
 """
 
 import json
-import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import Dict, Any
+from typing import Any
 
-from bridge.core import RuleProcessor, HostExpander, PathConverter, RedirectRule
+import pytest
+
+from bridge.core import HostExpander, PathConverter, RedirectRule, RuleProcessor
 
 
 @pytest.fixture
-def sample_rules() -> Dict[str, Any]:
+def sample_rules() -> dict[str, Any]:
     """Sample rules data for testing."""
     return {
         "rules": [
@@ -23,57 +23,48 @@ def sample_rules() -> Dict[str, Any]:
                 "host": {
                     "type": "bySubdomain",
                     "subdomain": "delivery",
-                    "base": "example.com"
-                }
+                    "base": "example.com",
+                },
             },
             {
                 "path": "/users/\\d+",
                 "destination": "https://users.example.com/profile/:id",
-                "status": 302
+                "status": 302,
             },
             {
                 "path": "/legacy",
                 "destination": "https://new.example.com/",
                 "status": 301,
-                "host": "any"
+                "host": "any",
             },
             {
                 "path": "/exact-match",
                 "destination": "https://target.example.com/page",
                 "status": 301,
-                "host": {
-                    "type": "exact",
-                    "domain": "old.example.com"
-                }
-            }
+                "host": {"type": "exact", "domain": "old.example.com"},
+            },
         ]
     }
 
 
 @pytest.fixture
-def invalid_rules() -> Dict[str, Any]:
+def invalid_rules() -> dict[str, Any]:
     """Invalid rules data for testing validation."""
     return {
         "rules": [
-            {
-                "path": "/missing-destination",
-                "status": 301
-            },
-            {
-                "destination": "https://example.com/missing-path",
-                "status": 301
-            },
+            {"path": "/missing-destination", "status": 301},
+            {"destination": "https://example.com/missing-path", "status": 301},
             {
                 "path": "/invalid-status",
                 "destination": "https://example.com/",
-                "status": 999
-            }
+                "status": 999,
+            },
         ]
     }
 
 
 @pytest.fixture
-def rules_file(tmp_path: Path, sample_rules: Dict[str, Any]) -> Path:
+def rules_file(tmp_path: Path, sample_rules: dict[str, Any]) -> Path:
     """Create a temporary rules.json file."""
     rules_file = tmp_path / "rules.json"
     rules_file.write_text(json.dumps(sample_rules, indent=2))
@@ -81,7 +72,7 @@ def rules_file(tmp_path: Path, sample_rules: Dict[str, Any]) -> Path:
 
 
 @pytest.fixture
-def invalid_rules_file(tmp_path: Path, invalid_rules: Dict[str, Any]) -> Path:
+def invalid_rules_file(tmp_path: Path, invalid_rules: dict[str, Any]) -> Path:
     """Create a temporary invalid rules.json file."""
     rules_file = tmp_path / "invalid_rules.json"
     rules_file.write_text(json.dumps(invalid_rules, indent=2))
@@ -130,24 +121,22 @@ def sample_redirect_rules() -> list[RedirectRule]:
             path="/api",
             destination="https://api.example.com/:splat",
             status_code=301,
-            host="delivery.example.com"
+            host="delivery.example.com",
         ),
         RedirectRule(
             path="/api/*",
             destination="https://api.example.com/:splat",
             status_code=301,
-            host="delivery.example.com"
+            host="delivery.example.com",
         ),
         RedirectRule(
             path="/users/:id",
             destination="https://users.example.com/profile/:id",
-            status_code=302
+            status_code=302,
         ),
         RedirectRule(
-            path="/legacy",
-            destination="https://new.example.com/",
-            status_code=301
-        )
+            path="/legacy", destination="https://new.example.com/", status_code=301
+        ),
     ]
 
 

@@ -2,9 +2,6 @@
 Unit tests for PathConverter class.
 """
 
-import pytest
-from bridge.core import PathConverter
-
 
 class TestPathConverter:
     """Test PathConverter functionality."""

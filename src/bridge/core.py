@@ -4,28 +4,29 @@ Core functionality for Bridge URL processing.
 
 import json
 import re
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
 class RedirectRule:
     """Represents a single redirect rule."""
+
     path: str
     destination: str
     status_code: int = 301
-    host: Optional[str] = None
-    conditions: Optional[Dict[str, Any]] = None
+    host: str | None = None
+    conditions: dict[str, Any] | None = None
 
 
 class HostExpander:
     """Handles host expansion logic for different host types."""
 
-    def __init__(self, base_domain: Optional[str] = None):
+    def __init__(self, base_domain: str | None = None):
         self.base_domain = base_domain
 
-    def expand_hosts(self, host_config: Union[str, Dict[str, Any]]) -> List[str]:
+    def expand_hosts(self, host_config: str | dict[str, Any]) -> list[str]:
         """
         Expand host configuration to list of actual hosts.
 
@@ -63,7 +64,7 @@ class PathConverter:
     """Converts regex paths to Netlify redirect patterns."""
 
     @staticmethod
-    def convert_regex_to_netlify(path_pattern: str) -> List[str]:
+    def convert_regex_to_netlify(path_pattern: str) -> list[str]:
         """
         Convert regex path patterns to Netlify redirect patterns.
 
@@ -100,26 +101,22 @@ class PathConverter:
 class RuleProcessor:
     """Main processor for handling rule files and generating output."""
 
-    def __init__(self, base_domain: Optional[str] = None):
+    def __init__(self, base_domain: str | None = None):
         self.host_expander = HostExpander(base_domain)
         self.path_converter = PathConverter()
 
-    def load_rules(self, rules_file: Path) -> Dict[str, Any]:
+    def load_rules(self, rules_file: Path) -> dict[str, Any]:
         """Load and parse rules from JSON file."""
         try:
-            with open(rules_file, 'r', encoding='utf-8') as f:
-                rules = json.load(f)
+            with open(rules_file, encoding="utf-8") as f:
+                rules: dict[str, Any] = json.load(f)
             return rules
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            raise ValueError(f"Error loading rules file: {e}")
+            raise ValueError(f"Error loading rules file: {e}") from e
 
-    def validate_rules(self, rules: Dict[str, Any]) -> List[str]:
+    def validate_rules(self, rules: dict[str, Any]) -> list[str]:
         """Validate rules and return list of errors."""
         errors = []
-
-        if not isinstance(rules, dict):
-            errors.append("Rules must be a JSON object")
-            return errors
 
         rules_list = rules.get("rules", [])
         if not isinstance(rules_list, list):
@@ -143,7 +140,7 @@ class RuleProcessor:
 
         return errors
 
-    def process_rules(self, rules: Dict[str, Any]) -> List[RedirectRule]:
+    def process_rules(self, rules: dict[str, Any]) -> list[RedirectRule]:
         """Process rules into internal format."""
         processed_rules = []
         rules_list = rules.get("rules", [])
@@ -167,20 +164,20 @@ class RuleProcessor:
                             path=path_pattern,
                             destination=rule_config["destination"],
                             status_code=rule_config.get("status", 301),
-                            host=host
+                            host=host,
                         )
                         processed_rules.append(rule)
                 else:
                     rule = RedirectRule(
                         path=path_pattern,
                         destination=rule_config["destination"],
-                        status_code=rule_config.get("status", 301)
+                        status_code=rule_config.get("status", 301),
                     )
                     processed_rules.append(rule)
 
         return processed_rules
 
-    def generate_netlify_redirects(self, rules: List[RedirectRule]) -> str:
+    def generate_netlify_redirects(self, rules: list[RedirectRule]) -> str:
         """Generate _redirects file content."""
         lines = []
 
@@ -190,7 +187,7 @@ class RuleProcessor:
 
         return "\\n".join(lines)
 
-    def generate_netlify_toml(self, rules: List[RedirectRule]) -> str:
+    def generate_netlify_toml(self, rules: list[RedirectRule]) -> str:
         """Generate netlify.toml file content."""
         toml_lines = []
 

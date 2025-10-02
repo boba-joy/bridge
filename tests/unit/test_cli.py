@@ -2,17 +2,15 @@
 Unit tests for CLI module.
 """
 
-import json
-import sys
-from io import StringIO
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
+
 from bridge.cli import (
-    create_parser,
-    cmd_check,
     cmd_build,
+    cmd_check,
+    create_parser,
     main,
 )
 
@@ -45,12 +43,17 @@ class TestCreateParser:
     def test_build_subcommand_full(self):
         """Test build subcommand with all arguments."""
         parser = create_parser()
-        args = parser.parse_args([
-            "build",
-            "--rules", "rules.json",
-            "--outdir", "custom_output",
-            "--artifacts", "toml"
-        ])
+        args = parser.parse_args(
+            [
+                "build",
+                "--rules",
+                "rules.json",
+                "--outdir",
+                "custom_output",
+                "--artifacts",
+                "toml",
+            ]
+        )
         assert args.command == "build"
         assert args.rules == Path("rules.json")
         assert args.outdir == Path("custom_output")
@@ -72,9 +75,11 @@ class TestCmdCheck:
         mock_processor.load_rules.return_value = {"rules": []}
         mock_processor.validate_rules.return_value = []
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_check(rules_file)
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_check(rules_file)
 
         assert result == 0
         mock_processor.load_rules.assert_called_once_with(rules_file)
@@ -87,18 +92,20 @@ class TestCmdCheck:
         mock_processor.load_rules.return_value = {"rules": []}
         mock_processor.validate_rules.return_value = [
             "Rule 0: missing path",
-            "Rule 1: missing destination"
+            "Rule 1: missing destination",
         ]
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_check(rules_file)
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_check(rules_file)
 
         assert result == 1
         expected_calls = [
             pytest.mock.call("❌ Validation failed:"),
             pytest.mock.call("  • Rule 0: missing path"),
-            pytest.mock.call("  • Rule 1: missing destination")
+            pytest.mock.call("  • Rule 1: missing destination"),
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -107,9 +114,11 @@ class TestCmdCheck:
         mock_processor = mocker.Mock()
         mock_processor.load_rules.side_effect = ValueError("File not found")
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_check(Path("nonexistent.json"))
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_check(Path("nonexistent.json"))
 
         assert result == 1
         mock_print.assert_called_with("❌ Error: File not found")
@@ -119,9 +128,11 @@ class TestCmdCheck:
         mock_processor = mocker.Mock()
         mock_processor.load_rules.side_effect = RuntimeError("Unexpected error")
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_check(rules_file)
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_check(rules_file)
 
         assert result == 1
         mock_print.assert_called_with("❌ Error: Unexpected error")
@@ -139,9 +150,11 @@ class TestCmdBuild:
         mock_processor.generate_netlify_redirects.return_value = "redirect content"
         mock_processor.generate_netlify_toml.return_value = "toml content"
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_build(rules_file, output_dir, "both")
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_build(rules_file, output_dir, "both")
 
         assert result == 0
         assert (output_dir / "_redirects").exists()
@@ -152,7 +165,7 @@ class TestCmdBuild:
         expected_calls = [
             pytest.mock.call(f"✅ Generated {output_dir / '_redirects'}"),
             pytest.mock.call(f"✅ Generated {output_dir / 'netlify.toml'}"),
-            pytest.mock.call("🎉 Build completed successfully! (1 rules)")
+            pytest.mock.call("🎉 Build completed successfully! (1 rules)"),
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -164,9 +177,11 @@ class TestCmdBuild:
         mock_processor.process_rules.return_value = []
         mock_processor.generate_netlify_redirects.return_value = "redirect content"
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_build(rules_file, output_dir, "redirects")
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print"),
+        ):
+            result = cmd_build(rules_file, output_dir, "redirects")
 
         assert result == 0
         assert (output_dir / "_redirects").exists()
@@ -181,9 +196,11 @@ class TestCmdBuild:
         mock_processor.process_rules.return_value = []
         mock_processor.generate_netlify_toml.return_value = "toml content"
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_build(rules_file, output_dir, "toml")
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print"),
+        ):
+            result = cmd_build(rules_file, output_dir, "toml")
 
         assert result == 0
         assert not (output_dir / "_redirects").exists()
@@ -196,15 +213,17 @@ class TestCmdBuild:
         mock_processor.load_rules.return_value = {"rules": []}
         mock_processor.validate_rules.return_value = ["Error 1", "Error 2"]
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_build(rules_file, output_dir, "both")
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_build(rules_file, output_dir, "both")
 
         assert result == 1
         expected_calls = [
             pytest.mock.call("❌ Validation failed:"),
             pytest.mock.call("  • Error 1"),
-            pytest.mock.call("  • Error 2")
+            pytest.mock.call("  • Error 2"),
         ]
         mock_print.assert_has_calls(expected_calls)
 
@@ -219,9 +238,11 @@ class TestCmdBuild:
         mock_processor.process_rules.return_value = []
         mock_processor.generate_netlify_redirects.return_value = "content"
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print"):
-                result = cmd_build(rules_file, output_dir, "redirects")
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print"),
+        ):
+            result = cmd_build(rules_file, output_dir, "redirects")
 
         assert result == 0
         assert output_dir.exists()
@@ -232,9 +253,11 @@ class TestCmdBuild:
         mock_processor = mocker.Mock()
         mock_processor.load_rules.side_effect = RuntimeError("Build error")
 
-        with patch("bridge.cli.RuleProcessor", return_value=mock_processor):
-            with patch("builtins.print") as mock_print:
-                result = cmd_build(rules_file, output_dir, "both")
+        with (
+            patch("bridge.cli.RuleProcessor", return_value=mock_processor),
+            patch("builtins.print") as mock_print,
+        ):
+            result = cmd_build(rules_file, output_dir, "both")
 
         assert result == 1
         mock_print.assert_called_with("❌ Error: Build error")
@@ -292,9 +315,11 @@ class TestMain:
         mock_args.command = None
         mock_parser.parse_args.return_value = mock_args
 
-        with patch("bridge.cli.create_parser", return_value=mock_parser):
-            with patch("sys.argv", ["bridge"]):
-                result = main()
+        with (
+            patch("bridge.cli.create_parser", return_value=mock_parser),
+            patch("sys.argv", ["bridge"]),
+        ):
+            result = main()
 
         assert result == 1
         mock_parser.parse_args.assert_called_with(None)

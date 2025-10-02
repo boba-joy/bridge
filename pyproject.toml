@@ -1,15 +1,17 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "bridge-url"
 version = "0.1.0"
 description = "CLI tool for managing Netlify URL redirections with rule-based JSON configuration"
-authors = [{name = "Arkady", email = "arkady@example.com"}]
+authors = ["Arkady <arkady@example.com>"]
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.13"
+license = "MIT"
+homepage = "https://github.com/arkady/bridge-url"
+repository = "https://github.com/arkady/bridge-url"
+documentation = "https://github.com/arkady/bridge-url#readme"
 keywords = ["netlify", "redirects", "url", "cli", "devops"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -22,98 +24,58 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Systems Administration",
 ]
+packages = [{include = "bridge", from = "src"}]
 
-dependencies = []
+[tool.poetry.dependencies]
+python = "^3.13"
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-cov>=4.0",
-    "pytest-mock>=3.12",
-    "ruff>=0.8",
-    "mypy>=1.11",
-    "build>=1.0",
-    "pre-commit>=3.6.0",
-]
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-cov = "^4.0"
+pytest-mock = "^3.12"
+ruff = "^0.8"
+mypy = "^1.11"
+pre-commit = "^3.6.0"
+poethepoet = "^0.27"
 
-test = [
-    "pytest>=8.0",
-    "pytest-cov>=4.0",
-    "pytest-mock>=3.12",
-]
-
-lint = [
-    "ruff>=0.8",
-    "mypy>=1.11",
-]
-
-[project.scripts]
+[tool.poetry.scripts]
 bridge = "bridge.cli:main"
-
-[project.urls]
-Homepage = "https://github.com/arkady/bridge-url"
-Repository = "https://github.com/arkady/bridge-url"
-Documentation = "https://github.com/arkady/bridge-url#readme"
-"Bug Reports" = "https://github.com/arkady/bridge-url/issues"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["bridge*"]
-
-[tool.setuptools.package-dir]
-"" = "src"
 
 # Poethepoetry tasks
 [tool.poe.tasks]
-# === Development ===
-setup = { shell = "python -m venv .venv && source .venv/bin/activate && pip install -e .", help = "Create venv and install package" }
-install = { shell = "source .venv/bin/activate && pip install -e .", help = "Install package in development mode" }
-dev = { shell = "source .venv/bin/activate && pip install -e .[dev]", help = "Install with development dependencies" }
-
 # === Bridge Commands ===
-check = { shell = "source .venv/bin/activate && python -m bridge check --rules examples/rules.json", help = "Validate example rules" }
-build = { shell = "source .venv/bin/activate && python -m bridge build --rules examples/rules.json --outdir output", help = "Build artifacts from example rules" }
-build-redirects = { shell = "source .venv/bin/activate && python -m bridge build --rules examples/rules.json --outdir output --artifacts redirects", help = "Build only _redirects file" }
-build-toml = { shell = "source .venv/bin/activate && python -m bridge build --rules examples/rules.json --outdir output --artifacts toml", help = "Build only netlify.toml file" }
+check = { cmd = "python -m bridge check --rules examples/rules.json", help = "Validate example rules" }
+build = { cmd = "python -m bridge build --rules examples/rules.json --outdir output", help = "Build artifacts from example rules" }
+build-redirects = { cmd = "python -m bridge build --rules examples/rules.json --outdir output --artifacts redirects", help = "Build only _redirects file" }
+build-toml = { cmd = "python -m bridge build --rules examples/rules.json --outdir output --artifacts toml", help = "Build only netlify.toml file" }
 
 # === Custom rules ===
-[tool.poe.tasks.check-rules]
-help = "Validate custom rules file"
-shell = "source .venv/bin/activate && python -m bridge check --rules ${rules}"
-args = [{ name = "rules", help = "Path to rules.json file", required = true }]
-
-[tool.poe.tasks.build-rules]
-help = "Build from custom rules file"
-shell = "source .venv/bin/activate && python -m bridge build --rules ${rules} --outdir ${outdir} --artifacts ${artifacts}"
-args = [
-  { name = "rules", help = "Path to rules.json file", required = true },
-  { name = "outdir", help = "Output directory", default = "output" },
-  { name = "artifacts", help = "Artifacts to generate", default = "both", options = ["redirects", "toml", "both"] }
-]
+check-rules = { cmd = "python -m bridge check --rules", help = "Validate custom rules file (usage: poe check-rules <file>)" }
+build-rules = { cmd = "python -m bridge build --rules", help = "Build from custom rules file (usage: poe build-rules <file> --outdir <dir>)" }
 
 # === Testing ===
-test = { shell = "source .venv/bin/activate && pytest tests/ -v", help = "Run all tests" }
-test-unit = { shell = "source .venv/bin/activate && pytest tests/unit/ -v", help = "Run unit tests" }
-test-integration = { shell = "source .venv/bin/activate && pytest tests/integration/ -v", help = "Run integration tests" }
-test-cov = { shell = "source .venv/bin/activate && pytest tests/ --cov=bridge --cov-report=term-missing --cov-report=html", help = "Run tests with coverage" }
-test-fast = { shell = "source .venv/bin/activate && pytest tests/unit/ -v -x", help = "Run unit tests (fail fast)" }
+test = { cmd = "pytest tests/ -v", help = "Run all tests" }
+test-unit = { cmd = "pytest tests/unit/ -v", help = "Run unit tests" }
+test-integration = { cmd = "pytest tests/integration/ -v", help = "Run integration tests" }
+test-cov = { cmd = "pytest tests/ --cov=bridge --cov-report=term-missing --cov-report=html", help = "Run tests with coverage" }
+test-fast = { cmd = "pytest tests/unit/ -v -x", help = "Run unit tests (fail fast)" }
 
 # === Code Quality ===
-lint = { shell = "source .venv/bin/activate && ruff check src/ tests/", help = "Lint code" }
-fix = { shell = "source .venv/bin/activate && ruff check src/ tests/ --fix", help = "Fix linting issues" }
-format = { shell = "source .venv/bin/activate && ruff format src/ tests/", help = "Format code with Ruff" }
-fmt-check = { shell = "source .venv/bin/activate && ruff format src/ tests/ --check", help = "Check code formatting" }
-type = { shell = "source .venv/bin/activate && mypy src/", help = "Type check" }
+lint = { cmd = "ruff check src/ tests/", help = "Lint code" }
+fix = { cmd = "ruff check src/ tests/ --fix", help = "Fix linting issues" }
+format = { cmd = "ruff format src/ tests/", help = "Format code with Ruff" }
+fmt-check = { cmd = "ruff format src/ tests/ --check", help = "Check code formatting" }
+type = { cmd = "mypy src/", help = "Type check" }
 quality = ["fmt-check", "lint", "type"]
-style = { shell = "source .venv/bin/activate && ruff format src/ tests/ && ruff check src/ tests/ --fix", help = "Format and fix all issues" }
+style = ["format", "fix"]
 
 # === Pre-commit ===
-pre-commit-install = { shell = "source .venv/bin/activate && pre-commit install", help = "Install pre-commit hooks" }
-pre-commit-run = { shell = "source .venv/bin/activate && pre-commit run --all-files", help = "Run pre-commit on all files" }
+pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit hooks" }
+pre-commit-run = { cmd = "pre-commit run --all-files", help = "Run pre-commit on all files" }
 
 # === Build & Deploy ===
-package = { shell = "source .venv/bin/activate && python -m build", help = "Build package" }
-clean = "rm -rf dist/ .coverage htmlcov/ .pytest_cache/ .mypy_cache/ .ruff_cache/ output/ .venv/"
+package = { cmd = "python -m build", help = "Build package" }
+clean = { cmd = "rm -rf dist/ .coverage htmlcov/ .pytest_cache/ .mypy_cache/ .ruff_cache/ output/", help = "Clean generated files" }
 
 # === Workflows ===
 ready = ["quality", "test-cov", "package"]
@@ -152,7 +114,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**" = ["S101", "T201"]  # Allow assert and print in tests
+"tests/**" = ["S101", "T201", "S603"]  # Allow assert, print, and subprocess in tests
 
 [tool.ruff.format]
 quote-style = "double"

@@ -2,7 +2,6 @@
 Unit tests for HostExpander class.
 """
 
-import pytest
 from bridge.core import HostExpander
 
 
@@ -55,11 +54,7 @@ class TestHostExpander:
 
     def test_expand_hosts_by_subdomain_custom(self, host_expander):
         """Test expanding bySubdomain with custom subdomain."""
-        host_config = {
-            "type": "bySubdomain",
-            "subdomain": "api",
-            "base": "test.com"
-        }
+        host_config = {"type": "bySubdomain", "subdomain": "api", "base": "test.com"}
         result = host_expander.expand_hosts(host_config)
         assert result == ["api.test.com"]
 

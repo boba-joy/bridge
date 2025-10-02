@@ -14,18 +14,13 @@ CLI tool for managing Netlify URL redirections with rule-based JSON configuratio
 ## Quick Start
 
 ```bash
-# Setup (choose one):
-./setup.sh              # Bash script
+# Setup
+./setup.sh              # Bash script + Poetry
 # OR
-make setup              # Makefile
-
-# Activate environment
-source .venv/bin/activate
+poetry install          # Direct Poetry install
 
 # Demo with example rules
-poe demo               # = poe check + poe build
-# OR
-make demo              # without poe
+poe demo                # = poe check + poe build
 
 # Use your own rules
 poe check-rules my-rules.json
@@ -34,26 +29,27 @@ poe build-rules my-rules.json
 
 ## Commands
 
-### With Poe (after `source .venv/bin/activate`)
+### With Poe (recommended)
 | Command | Description |
 |---------|-------------|
+| `poe demo` | Validate + build examples |
 | `poe check` | Validate example rules |
 | `poe build` | Build artifacts from examples |
 | `poe build-redirects` | Build only `_redirects` file |
 | `poe build-toml` | Build only `netlify.toml` file |
 | `poe check-rules <file>` | Validate custom rules file |
 | `poe build-rules <file>` | Build from custom rules file |
+| `poe test` | Run all tests |
+| `poe style` | Format and fix code |
+| `poe quality` | Check code quality |
 
-### With Make (no venv activation needed)
+### With Poetry (alternative)
 | Command | Description |
 |---------|-------------|
-| `make setup` | Create venv and install dependencies |
-| `make demo` | Validate + build examples |
-| `make check` | Validate example rules |
-| `make build` | Build artifacts from examples |
-| `make test` | Run tests |
-| `make style` | Format and fix code |
-| `make clean` | Clean all generated files |
+| `poetry install` | Install dependencies |
+| `poetry shell` | Activate virtual environment |
+| `poetry run <command>` | Run command in venv |
+| `poetry run poe demo` | Run poe commands via poetry |
 
 ## Custom Rules
 
@@ -71,12 +67,10 @@ poe build-rules rules.json --outdir dist --artifacts toml
 
 ```bash
 # Setup development environment (first time)
-./setup.sh              # Creates .venv + installs deps + pre-commit
+./setup.sh              # Poetry install + pre-commit setup
 # OR
-make setup
-
-# Activate environment
-source .venv/bin/activate
+poetry install          # Direct Poetry install
+poe pre-commit-install  # Setup pre-commit hooks
 
 # Code quality (auto-runs on commit)
 poe style               # format and fix all issues
