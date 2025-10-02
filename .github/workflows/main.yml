@@ -202,12 +202,24 @@ jobs:
           </html>
           EOF
 
-          # Copy Netlify config files
+          # Copy _redirects file
           cp netlify-dist/_redirects site/
-          cp netlify-dist/netlify.toml site/
 
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli
+          # Create a simple netlify.toml that just defines redirects from the _redirects file
+          cat > site/netlify.toml << 'EOF'
+          # Generated Netlify configuration
+          # The actual redirects are defined in _redirects file
+
+          [build]
+            publish = "."
+
+          # Security headers
+          [[headers]]
+            for = "/*"
+            [headers.values]
+              X-Frame-Options = "DENY"
+              X-Content-Type-Options = "nosniff"
+          EOF
 
       - name: Verify site directory
         run: |
@@ -222,17 +234,16 @@ jobs:
 
       - name: Deploy to Netlify
         id: deploy
-        run: |
-          cd site
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # Production deployment
-            DEPLOY_URL=$(netlify deploy --dir=. --prod --message="Deploy from GitHub Actions - ${{ github.sha }}" --json | jq -r '.url')
-          else
-            # Preview deployment
-            DEPLOY_URL=$(netlify deploy --dir=. --message="Preview from GitHub Actions - ${{ github.sha }}" --json | jq -r '.deploy_url')
-          fi
-          echo "deploy-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
-          echo "🚀 Deployed to: $DEPLOY_URL"
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: './site'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions - ${{ github.sha }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          overwrites-pull-request-comment: false
+          alias: ""
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
