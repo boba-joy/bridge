@@ -161,13 +161,15 @@ jobs:
           echo "📄 netlify.toml content:"
           cat netlify-dist/netlify.toml
 
-      - name: Create minimal site
+      - name: Create isolated deployment directory
         run: |
-          mkdir -p site
+          # Create completely isolated temp directory
+          TEMP_DEPLOY_DIR=$(mktemp -d)
+          echo "TEMP_DEPLOY_DIR=$TEMP_DEPLOY_DIR" >> $GITHUB_ENV
 
-          # Create a simple index.html that shows the redirects are working
+          # Create index.html
           DEPLOY_TIME=$(date -u)
-          cat > site/index.html << EOF
+          cat > "$TEMP_DEPLOY_DIR/index.html" << EOF
           <!DOCTYPE html>
           <html>
           <head>
@@ -196,7 +198,7 @@ jobs:
               <pre>$(cat netlify-dist/_redirects)</pre>
 
               <h4>netlify.toml</h4>
-              <pre>$(cat netlify-dist/netlify.toml)</pre>
+              <pre>$(cat netlify-dist/netlify.toml | head -20)</pre>
 
               <hr>
               <p><a href="https://github.com/arkady/bridge-url">Bridge URL on GitHub</a></p>
@@ -205,40 +207,31 @@ jobs:
           EOF
 
           # Copy _redirects file
-          cp netlify-dist/_redirects site/
+          cp netlify-dist/_redirects "$TEMP_DEPLOY_DIR/"
 
-          # Create a simple netlify.toml that just defines redirects from the _redirects file
-          cat > site/netlify.toml << 'EOF'
+          # Create netlify.toml
+          cat > "$TEMP_DEPLOY_DIR/netlify.toml" << 'EOF'
           # Generated Netlify configuration
-          # The actual redirects are defined in _redirects file
-
           [build]
             publish = "."
-
-          # Security headers
-          [[headers]]
-            for = "/*"
-            [headers.values]
-              X-Frame-Options = "DENY"
-              X-Content-Type-Options = "nosniff"
           EOF
 
-      - name: Verify site directory
+      - name: Verify deployment directory
         run: |
-          echo "📂 Contents of site directory:"
-          ls -la site/
+          echo "📂 Contents of deployment directory:"
+          ls -la "$TEMP_DEPLOY_DIR/"
           echo ""
           echo "📄 _redirects content:"
-          cat site/_redirects
+          cat "$TEMP_DEPLOY_DIR/_redirects"
           echo ""
           echo "📄 netlify.toml content:"
-          cat site/netlify.toml
+          cat "$TEMP_DEPLOY_DIR/netlify.toml"
 
       - name: Deploy to Netlify
         id: deploy
         uses: nwtgck/actions-netlify@v3.0
         with:
-          publish-dir: './site'
+          publish-dir: '${{ env.TEMP_DEPLOY_DIR }}'
           production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions - ${{ github.sha }}"
